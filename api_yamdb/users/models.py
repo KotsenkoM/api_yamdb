@@ -9,6 +9,7 @@ class User(AbstractUser):
     )
     email = models.EmailField(unique=True)
     username = models.CharField(max_length=150, unique=True)
+    role = models.CharField(max_length=150, null=True)
 
     EMAIL_FIELD = 'email'
     USERNAME_FIELD = 'email'
