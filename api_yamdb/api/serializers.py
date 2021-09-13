@@ -4,7 +4,7 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
-from api_yamdb.settings import DEFAULT_FROM_EMAIL
+#from api_yamdb.settings import DEFAULT_FROM_EMAIL
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -33,9 +33,10 @@ class TitleSerializer(serializers.ModelSerializer):
 
 class TitleUpdateCreateSerializer(serializers.ModelSerializer):
     genre = serializers.SlugRelatedField(queryset=Genre.objects.all(),
-                                         slug_field='genre', many=True)
+                                         slug_field='slug',
+                                         many=True, required=False)
     category = serializers.SlugRelatedField(queryset=Category.objects.all(),
-                                            slug_field='category')
+                                            slug_field='slug', required=False)
 
     class Meta:
         model = Title
@@ -79,6 +80,11 @@ class EmailSerializer(serializers.Serializer):
             'username',
             'email',
         )
+
+    def validate_username(self, value):
+        if value == 'me':
+            raise serializers.ValidationError('Неверный ник-нейм')
+        return value
 
 
 class ConfirmationSerializer(serializers.Serializer):
