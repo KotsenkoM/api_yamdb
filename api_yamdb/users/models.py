@@ -1,12 +1,12 @@
 from django.contrib.auth.models import AbstractUser, UserManager
-from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.core import validators
 
 
 class UserRoles:
-    USER = "user"
-    MODERATOR = "moderator"
-    ADMIN = "admin"
+    USER = 'user'
+    MODERATOR = 'moderator'
+    ADMIN = 'admin'
     choices = (
         (USER, USER),
         (MODERATOR, MODERATOR),
@@ -15,26 +15,39 @@ class UserRoles:
 
 
 class User(AbstractUser):
-    username = models.CharField(
-        max_length=50, unique=True,
-        blank=True, verbose_name='Пользователь'
-    )
-    email = models.EmailField(
-         blank=False, unique=True, verbose_name='Электронная почта'
-    )
     bio = models.TextField(
-        'Биография', blank=True,
+        verbose_name="О себе",
+        blank=True,
+        null=True,
+        max_length=200
     )
     role = models.CharField(
-        max_length=10, choices=UserRoles.choices,
-        default=UserRoles.USER, verbose_name="Роль",
+        verbose_name='Роль пользователя',
+        max_length=10,
+    )
+    email = models.EmailField(
+        verbose_name="Электронная почта",
+        validators=[validators.validate_email],
+        unique=True,
     )
     confirmation_code = models.CharField(
-        max_length=30, editable=False, blank=True,
-        null=True, unique=True, verbose_name='Код подтверждения')
+        null=True,
+        blank=True,
+        max_length=255
+    )
 
-    EMAIL_FIELD = 'email'
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['username']
+    REQUIRED_FIELDS = ['confirmation_code', 'username']
+
+    def __str__(self):
+        return self.email
+
+    @property
+    def is_admin(self):
+        return self.role == self.ADMIN
+
+    @property
+    def is_moderator(self):
+        return self.role == self.MODERATOR
 
     objects = UserManager()

@@ -1,7 +1,10 @@
-from reviews.models import Title, Genre, Category, Review
+from reviews.models import Title, Genre, Category # Review
 from users.models import User
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
+from django.contrib.auth.tokens import default_token_generator
+from django.core.mail import send_mail
+from api_yamdb.settings import DEFAULT_FROM_EMAIL
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -39,14 +42,14 @@ class TitleUpdateCreateSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class ReviewSerializer(serializers.ModelSerializer):
-    author = serializers.SlugRelatedField(read_only=True,
-                                          slug_field='username')
-    title = serializers.SlugRelatedField(read_only=True, slug_field='pk')
-
-    class Meta:
-        model = Review
-        fields = '__all__'
+# class ReviewSerializer(serializers.ModelSerializer):
+#     author = serializers.SlugRelatedField(read_only=True,
+#                                           slug_field='username')
+#     title = serializers.SlugRelatedField(read_only=True, slug_field='pk')
+#
+#     class Meta:
+#         model = Review
+#         fields = '__all__'
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -74,7 +77,7 @@ class EmailSerializer(serializers.Serializer):
         model = User
         fields = (
             'username',
-            'email'
+            'email',
         )
 
 
@@ -90,15 +93,27 @@ class ConfirmationSerializer(serializers.Serializer):
         model = User
         fields = (
             'username',
-            'confirmation_code'
+            'confirmation_code',
         )
 
-from rest_framework import serializers
-from users.models import User
-
-
-class UserSerializer(serializers.ModelSerializer):
-
+class RegistrationSerializer(serializers.ModelSerializer):
     class Meta:
-        fields = '__all__'
         model = User
+        fields = ('email', 'username',)
+
+    def create(self, validated_data):
+        user = User(email=validated_data['email'])
+        confirmation_code = default_token_generator.make_token(user)
+        user.save()
+        send_mail(
+            'Confirmation_code',
+            confirmation_code,
+            DEFAULT_FROM_EMAIL,
+            [validated_data['email']],
+        )
+        return user
+
+
+class LoginSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    confirmation_code = serializers.CharField()
