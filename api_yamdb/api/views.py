@@ -1,3 +1,4 @@
+from rest_framework import status
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -89,18 +90,18 @@ class RegistrationAPIView(APIView):
         serializer = RegistrationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def get_auth_token(request):
     serializer = LoginSerializer(data=request.data)
-    serializer.is_valid(raise_exception=True)
-    email = serializer.validated_data['email']
+    # serializer.is_valid(raise_exception=True)
+    username = serializer.validated_data['username']
     confirmation_code = serializer.validated_data['confirmation_code']
     user = get_object_or_404(
         User,
-        email=email,
+        username=username,
         confirmation_code=confirmation_code,
     )
     refresh = RefreshToken.for_user(user)
