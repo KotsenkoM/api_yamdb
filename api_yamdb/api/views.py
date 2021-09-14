@@ -1,10 +1,8 @@
 from rest_framework import status
-from rest_framework.decorators import action, api_view, permission_classes
-from rest_framework.permissions import AllowAny
+from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
-from rest_framework.views import APIView
-from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
+from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework import permissions
 from django.db.models import Avg
 from django.core.mail import send_mail
@@ -24,8 +22,6 @@ from .serializers import (
     GenreSerializer,
     CategorySerializer,
     TitleUpdateCreateSerializer,
-    RegistrationSerializer,
-    LoginSerializer,
     EmailSerializer,
     ConfirmationSerializer
 )
@@ -89,16 +85,6 @@ class TitleViewSet(viewsets.ModelViewSet):
         return TitleSerializer
 
 
-# class RegistrationAPIView(APIView):
-#     permission_classes = [AllowAny]
-#
-#     def post(self, request):
-#         serializer = RegistrationSerializer(data=request.data)
-#         serializer.is_valid(raise_exception=True)
-#         serializer.save()
-#         return Response(serializer.data, status=status.HTTP_200_OK)
-
-
 @api_view(['POST'])
 def signup(request):
     serializer = EmailSerializer(data=request.data)
@@ -134,7 +120,7 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     lookup_field = 'username'
-    permission_classes = (permissions.IsAuthenticated, IsAdmin,)
+    permission_classes = (permissions.IsAuthenticated, IsAdminOrReadOnly, IsAdmin)
 
     @action(
         detail=False,
@@ -142,9 +128,13 @@ class UserViewSet(viewsets.ModelViewSet):
         permission_classes=(permissions.IsAuthenticated,)
     )
     def me(self, request):
-        serializer = UserSerializer(
-            self.request.user,
-            data=request.data, partial=True)
+        if request.method == 'GET':
+            serializer = UserSerializer(request.user)
+            return Response(serializer.data)
+        if request.user.role == 'user':
+            serializer = UserSerializer(request.user)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        serializer = UserSerializer(request.user, request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)

@@ -24,6 +24,8 @@ class User(AbstractUser):
     role = models.CharField(
         verbose_name='Роль пользователя',
         max_length=10,
+        default=UserRoles.USER,
+        choices=UserRoles.choices
     )
     email = models.EmailField(
         verbose_name="Электронная почта",
@@ -49,5 +51,9 @@ class User(AbstractUser):
     @property
     def is_moderator(self):
         return self.role == UserRoles.MODERATOR
+
+    @property
+    def is_user(self):
+        return self.role == UserRoles.USER
 
     objects = UserManager()

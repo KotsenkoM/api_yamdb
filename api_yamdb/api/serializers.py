@@ -101,22 +101,3 @@ class ConfirmationSerializer(serializers.Serializer):
             'username',
             'confirmation_code',
         )
-
-class RegistrationSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ('email', 'username',)
-
-    def create(self, validated_data):
-        user = User.objects.create_user(
-            email=validated_data['email'],
-            username=validated_data.get('username'),
-            confirmation_code=default_token_generator
-        )
-        user.save()
-        return user
-
-
-class LoginSerializer(serializers.Serializer):
-    username = serializers.CharField()
-    confirmation_code = serializers.CharField()
