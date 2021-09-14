@@ -113,14 +113,16 @@ def get_auth_token(request):
         user.save()
         token = AccessToken.for_user(user)
         return Response({'token': f'{token}'}, status=status.HTTP_200_OK)
-    return Response('Неверный код подтверждения', status=status.HTTP_400_BAD_REQUEST)
+    return Response(
+        'Неверный код подтверждения', status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     lookup_field = 'username'
-    permission_classes = (permissions.IsAuthenticated, IsAdminOrReadOnly, IsAdmin)
+    permission_classes = (
+        permissions.IsAuthenticated, IsAdminOrReadOnly, IsAdmin)
 
     @action(
         detail=False,
