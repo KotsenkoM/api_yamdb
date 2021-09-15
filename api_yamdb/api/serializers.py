@@ -1,18 +1,17 @@
-from reviews.models import Title, Genre, Category
-from users.models import User
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
+from reviews.models import Category, Comment, Genre, Review, Title
+from users.models import User
+
 
 class GenreSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Genre
         fields = ('name', 'slug',)
 
 
 class CategorySerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Category
         fields = ('name', 'slug',)
@@ -40,14 +39,34 @@ class TitleUpdateCreateSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-# class ReviewSerializer(serializers.ModelSerializer):
-#     author = serializers.SlugRelatedField(read_only=True,
-#                                           slug_field='username')
-#     title = serializers.SlugRelatedField(read_only=True, slug_field='pk')
-#
-#     class Meta:
-#         model = Review
-#         fields = '__all__'
+class ReviewSerializer(serializers.ModelSerializer):
+    author = serializers.SlugRelatedField(read_only=True,
+                                          slug_field='username',
+                                          default=serializers.CurrentUserDefault())
+    title = serializers.SlugRelatedField(read_only=True, slug_field='name')
+
+    class Meta:
+        model = Review
+        fields = '__all__'
+
+    def validate(self, attrs):
+        request = self.context.get('request')
+        if request.method != 'POST':
+            return attrs
+        title = self.context.get('view').kwargs.get('title_id')
+        if Review.objects.filter(author=request.user, title=title).exists():
+            raise serializers.ValidationError('Нельзя создавать больше одного отзыва!')
+        return attrs
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    author = serializers.SlugRelatedField(read_only=True,
+                                          slug_field='username')
+    review = serializers.SlugRelatedField(read_only=True, slug_field='text')
+
+    class Meta:
+        model = Comment
+        fields = '__all__'
 
 
 class UserSerializer(serializers.ModelSerializer):
