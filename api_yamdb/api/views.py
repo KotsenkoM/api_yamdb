@@ -1,30 +1,21 @@
-from rest_framework import status
-from rest_framework.decorators import action, api_view
-from rest_framework.response import Response
-from django.shortcuts import get_object_or_404
-from rest_framework_simplejwt.tokens import AccessToken
-from rest_framework import permissions
-from django.db.models import Avg
-from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
+from django.core.mail import send_mail
+from django.db.models import Avg
+from django.shortcuts import get_object_or_404
+from django_filters import CharFilter, FilterSet, NumberFilter
+from rest_framework import filters, mixins, permissions, status, viewsets
+from rest_framework.decorators import action, api_view
+from rest_framework.response import Response
+from rest_framework_simplejwt.tokens import AccessToken
 
-
+from reviews.models import Category, Genre, Review, Title
 from users.models import User
-from .serializers import UserSerializer
-from django_filters import FilterSet, CharFilter, NumberFilter
-from reviews.models import Title, Genre, Category
-from rest_framework import viewsets, filters, mixins
 
-from .permissions import IsAdminOrReadOnly, IsAdmin
-from .serializers import (
-    TitleSerializer,
-    GenreSerializer,
-    CategorySerializer,
-    TitleUpdateCreateSerializer,
-    EmailSerializer,
-    ConfirmationSerializer
-)
+from .permissions import IsAdmin, IsAdminOrReadOnly, ReviewCommentPermission
+from .serializers import (CategorySerializer, CommentSerializer, ConfirmationSerializer,
+                          EmailSerializer, GenreSerializer, ReviewSerializer,
+                          TitleSerializer, TitleUpdateCreateSerializer, UserSerializer)
 
 
 class CustomViewSet(mixins.ListModelMixin, mixins.CreateModelMixin,
@@ -83,6 +74,32 @@ class TitleViewSet(viewsets.ModelViewSet):
         if self.action in ['create', 'partial_update', 'destroy']:
             return TitleUpdateCreateSerializer
         return TitleSerializer
+
+
+class ReviewViewSet(viewsets.ModelViewSet):
+    permission_classes = [ReviewCommentPermission]
+    serializer_class = ReviewSerializer
+
+    def get_queryset(self):
+        title = get_object_or_404(Title, id=self.kwargs.get('title_id'))
+        return title.reviews.all()
+
+    def perform_create(self, serializer):
+        title = get_object_or_404(Title, id=self.kwargs.get('title_id'))
+        serializer.save(author=self.request.user, title=title)
+
+
+class CommentViewSet(viewsets.ModelViewSet):
+    permission_classes = [ReviewCommentPermission]
+    serializer_class = CommentSerializer
+
+    def get_queryset(self):
+        review = get_object_or_404(Review, id=self.kwargs.get('review_id'))
+        return review.comments.all()
+
+    def perform_create(self, serializer):
+        review = get_object_or_404(Review, id=self.kwargs.get('review_id'))
+        serializer.save(author=self.request.user, review=review)
 
 
 @api_view(['POST'])
