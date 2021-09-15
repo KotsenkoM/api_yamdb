@@ -1,6 +1,5 @@
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
-
 from reviews.models import Category, Comment, Genre, Review, Title
 from users.models import User
 
@@ -40,9 +39,11 @@ class TitleUpdateCreateSerializer(serializers.ModelSerializer):
 
 
 class ReviewSerializer(serializers.ModelSerializer):
-    author = serializers.SlugRelatedField(read_only=True,
-                                          slug_field='username',
-                                          default=serializers.CurrentUserDefault())
+    author = serializers.SlugRelatedField(
+        read_only=True,
+        slug_field='username',
+        default=serializers.CurrentUserDefault()
+    )
     title = serializers.SlugRelatedField(read_only=True, slug_field='name')
 
     class Meta:
@@ -55,7 +56,8 @@ class ReviewSerializer(serializers.ModelSerializer):
             return attrs
         title = self.context.get('view').kwargs.get('title_id')
         if Review.objects.filter(author=request.user, title=title).exists():
-            raise serializers.ValidationError('Нельзя создавать больше одного отзыва!')
+            raise serializers.ValidationError(
+                'Нельзя создавать больше одного отзыва!')
         return attrs
 
 
