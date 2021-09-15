@@ -13,9 +13,17 @@ from reviews.models import Category, Genre, Review, Title
 from users.models import User
 
 from .permissions import IsAdmin, IsAdminOrReadOnly, ReviewCommentPermission
-from .serializers import (CategorySerializer, CommentSerializer, ConfirmationSerializer,
-                          EmailSerializer, GenreSerializer, ReviewSerializer,
-                          TitleSerializer, TitleUpdateCreateSerializer, UserSerializer)
+from .serializers import (
+    CategorySerializer,
+    CommentSerializer,
+    ConfirmationSerializer,
+    EmailSerializer,
+    GenreSerializer,
+    ReviewSerializer,
+    TitleSerializer,
+    TitleUpdateCreateSerializer,
+    UserSerializer
+)
 
 
 class CustomViewSet(mixins.ListModelMixin, mixins.CreateModelMixin,
