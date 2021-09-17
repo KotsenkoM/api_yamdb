@@ -22,15 +22,17 @@ class Category(models.Model):
 
 
 class Title(models.Model):
-    name = models.CharField(max_length=200,
-                            verbose_name='Название произведения')
-    year = models.IntegerField(
-        'Дата первой публикации')
+    name = models.CharField(
+        max_length=200, verbose_name='Название произведения'
+    )
+    year = models.IntegerField('Дата первой публикации')
     description = models.TextField(blank=True, null=True, default='')
     genre = models.ManyToManyField(Genre)
     category = models.ForeignKey(
-        Category, on_delete=models.SET_NULL,
-        related_name="category_title", null=True
+        Category,
+        on_delete=models.SET_NULL,
+        related_name='category_title',
+        null=True,
     )
 
     def __str__(self):
@@ -49,14 +51,15 @@ class Review(models.Model):
         Title, on_delete=models.CASCADE, related_name='reviews', null=True
     )
     score = models.IntegerField(
-        default=1,
-        validators=[MinValueValidator, MaxValueValidator])
+        default=1, validators=[MinValueValidator, MaxValueValidator]
+    )
 
     class Meta:
         ordering = ['-pub_date']
         constraints = [
-            models.UniqueConstraint(fields=['author', 'title'],
-                                    name='author_title')
+            models.UniqueConstraint(
+                fields=['author', 'title'], name='author_title'
+            )
         ]
 
     def __str__(self):

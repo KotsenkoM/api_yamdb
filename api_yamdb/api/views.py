@@ -4,30 +4,27 @@ from django.core.mail import send_mail
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from django_filters import CharFilter, FilterSet, NumberFilter
+
 from rest_framework import filters, mixins, permissions, status, viewsets
 from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
 
 from reviews.models import Category, Genre, Review, Title
-from users.models import User
-
+from users.models import User, UserRoles
 from .permissions import IsAdmin, IsAdminOrReadOnly, ReviewCommentPermission
-from .serializers import (
-    CategorySerializer,
-    CommentSerializer,
-    ConfirmationSerializer,
-    EmailSerializer,
-    GenreSerializer,
-    ReviewSerializer,
-    TitleSerializer,
-    TitleUpdateCreateSerializer,
-    UserSerializer
-)
+from .serializers import (CategorySerializer, CommentSerializer,
+                          ConfirmationSerializer, EmailSerializer,
+                          GenreSerializer, ReviewSerializer, TitleSerializer,
+                          TitleUpdateCreateSerializer, UserSerializer)
 
 
-class CustomViewSet(mixins.ListModelMixin, mixins.CreateModelMixin,
-                    mixins.DestroyModelMixin, viewsets.GenericViewSet):
+class CustomViewSet(
+    mixins.ListModelMixin,
+    mixins.CreateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet,
+):
     pass
 
 
@@ -50,22 +47,10 @@ class GenreViewSet(CustomViewSet):
 
 
 class TitlesFilter(FilterSet):
-    category = CharFilter(
-        field_name='category__slug',
-        lookup_expr='iexact'
-    )
-    genre = CharFilter(
-        field_name='genre__slug',
-        lookup_expr='iexact'
-    )
-    name = CharFilter(
-        field_name='name',
-        lookup_expr='contains'
-    )
-    year = NumberFilter(
-        field_name='year',
-        lookup_expr='iexact'
-    )
+    category = CharFilter(field_name='category__slug', lookup_expr='iexact')
+    genre = CharFilter(field_name='genre__slug', lookup_expr='iexact')
+    name = CharFilter(field_name='name', lookup_expr='contains')
+    year = NumberFilter(field_name='year', lookup_expr='iexact')
 
     class Meta:
         model = Title
@@ -116,10 +101,14 @@ def signup(request):
     serializer.is_valid(raise_exception=True)
     email = serializer.validated_data.get('email')
     username = serializer.validated_data.get('username')
-    user, create = User.objects.get_or_create(email=email, username=username)
+    user, _ = User.objects.get_or_create(email=email, username=username)
     confirmation_code = default_token_generator.make_token(user)
-    send_mail('cod', f'Ваш код подтверждения {confirmation_code}',
-              settings.DEFAULT_FROM_EMAIL, [email])
+    send_mail(
+        'cod',
+        f'Ваш код подтверждения {confirmation_code}',
+        settings.DEFAULT_FROM_EMAIL,
+        [email],
+    )
     return Response({'email': email, 'username': username})
 
 
@@ -129,17 +118,15 @@ def get_auth_token(request):
     serializer.is_valid(raise_exception=True)
     username = serializer.validated_data['username']
     confirmation_code = serializer.validated_data['confirmation_code']
-    user = get_object_or_404(
-        User,
-        username=username,
-    )
+    user = get_object_or_404(User, username=username,)
     if default_token_generator.check_token(user, confirmation_code):
         user.is_active = True
         user.save()
         token = AccessToken.for_user(user)
         return Response({'token': f'{token}'}, status=status.HTTP_200_OK)
     return Response(
-        'Неверный код подтверждения', status=status.HTTP_400_BAD_REQUEST)
+        'Неверный код подтверждения', status=status.HTTP_400_BAD_REQUEST
+    )
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -147,18 +134,21 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     lookup_field = 'username'
     permission_classes = (
-        permissions.IsAuthenticated, IsAdminOrReadOnly, IsAdmin)
+        permissions.IsAuthenticated,
+        IsAdminOrReadOnly,
+        IsAdmin,
+    )
 
     @action(
         detail=False,
         methods=['get', 'patch'],
-        permission_classes=(permissions.IsAuthenticated,)
+        permission_classes=(permissions.IsAuthenticated,),
     )
     def me(self, request):
         if request.method == 'GET':
             serializer = UserSerializer(request.user)
             return Response(serializer.data)
-        if request.user.role == 'user':
+        if request.user.role == UserRoles.USER:
             serializer = UserSerializer(request.user)
             return Response(serializer.data, status=status.HTTP_200_OK)
         serializer = UserSerializer(request.user, request.data, partial=True)
