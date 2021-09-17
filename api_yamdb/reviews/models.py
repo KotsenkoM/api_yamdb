@@ -61,7 +61,7 @@ class Review(models.Model):
     )
     score = models.IntegerField(
         default=1,
-        validators=[MinValueValidator, MaxValueValidator])
+        validators=[MinValueValidator(1), MaxValueValidator(10)])
 
     class Meta:
         ordering = ['-pub_date']
@@ -69,6 +69,8 @@ class Review(models.Model):
             models.UniqueConstraint(fields=['author', 'title'],
                                     name='author_title')
         ]
+        verbose_name = 'Отзыв'
+        verbose_name_plural = 'Отзывы'
 
     def __str__(self):
         return self.text
@@ -86,3 +88,5 @@ class Comment(models.Model):
 
     class Meta:
         ordering = ['-pub_date']
+        verbose_name = 'Комментарий'
+        verbose_name_plural = 'Комментарии'
