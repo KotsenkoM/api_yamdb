@@ -16,27 +16,20 @@ class UserRoles:
 
 class User(AbstractUser):
     bio = models.TextField(
-        verbose_name="О себе",
-        blank=True,
-        null=True,
-        max_length=200
+        verbose_name='О себе', blank=True, null=True, max_length=200
     )
     role = models.CharField(
         verbose_name='Роль пользователя',
         max_length=10,
         default=UserRoles.USER,
-        choices=UserRoles.choices
+        choices=UserRoles.choices,
     )
     email = models.EmailField(
-        verbose_name="Электронная почта",
+        verbose_name='Электронная почта',
         validators=[validators.validate_email],
         unique=True,
     )
-    confirmation_code = models.CharField(
-        null=True,
-        blank=True,
-        max_length=255
-    )
+    confirmation_code = models.CharField(null=True, blank=True, max_length=255)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['confirmation_code', 'username']
