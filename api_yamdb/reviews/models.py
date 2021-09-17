@@ -35,8 +35,8 @@ class Title(models.Model):
     name = models.CharField(
         max_length=200, verbose_name='Название произведения'
     )
-    year = models.IntegerField('Дата первой публикации', validators=[
-         year_validator])
+    year = models.IntegerField('Дата первой публикации',
+                               validators=[year_validator])
     description = models.TextField(blank=True, null=True, default='')
     genre = models.ManyToManyField(Genre)
     category = models.ForeignKey(
