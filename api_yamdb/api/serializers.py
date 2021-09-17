@@ -1,5 +1,3 @@
-from reviews.models import Title, Genre, Category # Review
-from users.models import User
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
@@ -10,15 +8,13 @@ from users.models import User
 class GenreSerializer(serializers.ModelSerializer):
     class Meta:
         model = Genre
-        exclude = ('id',
-        )
+        exclude = ('id',)
 
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        exclude = ('id',
-        )
+        exclude = ('id',)
 
 
 class TitleSerializer(serializers.ModelSerializer):
@@ -134,23 +130,3 @@ class ConfirmationSerializer(serializers.Serializer):
             'username',
             'confirmation_code',
         )
-
-
-class RegistrationSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ('email', 'username',)
-
-    def create(self, validated_data):
-        user = User.objects.create_user(
-            email=validated_data['email'],
-            username=validated_data.get('username'),
-            confirmation_code=default_token_generator
-        )
-        user.save()
-        return user
-
-
-class LoginSerializer(serializers.Serializer):
-    username = serializers.CharField()
-    confirmation_code = serializers.CharField()

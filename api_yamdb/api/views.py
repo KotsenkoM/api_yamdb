@@ -3,35 +3,22 @@ from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
-from django_filters import CharFilter, FilterSet, NumberFilter
 
-from rest_framework import filters, mixins, permissions, status, viewsets
+from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
 
 from reviews.models import Category, Genre, Review, Title
-from users.models import User
-from .serializers import UserSerializer
-from django_filters import FilterSet, CharFilter, NumberFilter
-from reviews.models import Title, Genre, Category
-from rest_framework import viewsets, filters, mixins
-
 from users.models import User, UserRoles
+
+from .filters import TitlesFilter
+from .mixins import CustomViewSet
 from .permissions import IsAdmin, IsAdminOrReadOnly, ReviewCommentPermission
 from .serializers import (CategorySerializer, CommentSerializer,
                           ConfirmationSerializer, EmailSerializer,
                           GenreSerializer, ReviewSerializer, TitleSerializer,
                           TitleUpdateCreateSerializer, UserSerializer)
-
-
-class CustomViewSet(
-    mixins.ListModelMixin,
-    mixins.CreateModelMixin,
-    mixins.DestroyModelMixin,
-    viewsets.GenericViewSet,
-):
-    pass
 
 
 class CategoryViewSet(CustomViewSet):
@@ -50,17 +37,6 @@ class GenreViewSet(CustomViewSet):
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
     lookup_field = 'slug'
-
-
-class TitlesFilter(FilterSet):
-    category = CharFilter(field_name='category__slug', lookup_expr='iexact')
-    genre = CharFilter(field_name='genre__slug', lookup_expr='iexact')
-    name = CharFilter(field_name='name', lookup_expr='contains')
-    year = NumberFilter(field_name='year', lookup_expr='iexact')
-
-    class Meta:
-        model = Title
-        fields = ('category', 'genre', 'name', 'year')
 
 
 class TitleViewSet(viewsets.ModelViewSet):
@@ -131,8 +107,7 @@ def get_auth_token(request):
         token = AccessToken.for_user(user)
         return Response({'token': f'{token}'}, status=status.HTTP_200_OK)
     return Response(
-        'Неверный код подтверждения',
-                    status=status.HTTP_400_BAD_REQUEST
+        'Неверный код подтверждения', status=status.HTTP_400_BAD_REQUEST
     )
 
 
