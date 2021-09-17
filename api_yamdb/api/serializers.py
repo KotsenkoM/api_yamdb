@@ -1,4 +1,4 @@
-from reviews.models import Title, Genre, Category # Review
+from reviews.models import Title, Genre, Category, Review
 from users.models import User
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
@@ -11,14 +11,14 @@ class GenreSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Genre
-        fields = ('name', 'slug',)
+        exclude = ('id',)
 
 
 class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Category
-        fields = ('name', 'slug',)
+        exclude = ('id',)
 
 
 class TitleSerializer(serializers.ModelSerializer):
@@ -41,16 +41,6 @@ class TitleUpdateCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Title
         fields = '__all__'
-
-
-# class ReviewSerializer(serializers.ModelSerializer):
-#     author = serializers.SlugRelatedField(read_only=True,
-#                                           slug_field='username')
-#     title = serializers.SlugRelatedField(read_only=True, slug_field='pk')
-#
-#     class Meta:
-#         model = Review
-#         fields = '__all__'
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -102,6 +92,7 @@ class ConfirmationSerializer(serializers.Serializer):
             'confirmation_code',
         )
 
+
 class RegistrationSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -120,3 +111,13 @@ class RegistrationSerializer(serializers.ModelSerializer):
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField()
     confirmation_code = serializers.CharField()
+
+
+class ReviewSerializer(serializers.ModelSerializer):
+    author = serializers.SlugRelatedField(read_only=True,
+                                          slug_field='username')
+    title = serializers.SlugRelatedField(read_only=True, slug_field='pk')
+
+    class Meta:
+        model = Review
+        fields = '__all__'

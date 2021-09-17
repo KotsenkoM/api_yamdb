@@ -13,12 +13,13 @@ from django.contrib.auth.tokens import default_token_generator
 
 
 from users.models import User
+from .mixins import CustomViewSet
 from .serializers import UserSerializer
-from django_filters import FilterSet, CharFilter, NumberFilter
-from reviews.models import Title, Genre, Category
-from rest_framework import viewsets, filters, mixins
+from .filters import TitlesFilter
+from reviews.models import Title, Genre, Category, Review
+from rest_framework import viewsets, filters
 
-from .permissions import IsAdminOrReadOnly, IsAdmin
+from .permissions import IsAdminOrReadOnly, IsAdmin, ReviewCommentPermission
 from .serializers import (
     TitleSerializer,
     GenreSerializer,
@@ -27,13 +28,9 @@ from .serializers import (
     RegistrationSerializer,
     LoginSerializer,
     EmailSerializer,
-    ConfirmationSerializer
+    ConfirmationSerializer,
+    ReviewSerializer
 )
-
-
-class CustomViewSet(mixins.ListModelMixin, mixins.CreateModelMixin,
-                    mixins.DestroyModelMixin, viewsets.GenericViewSet):
-    pass
 
 
 class CategoryViewSet(CustomViewSet):
@@ -54,29 +51,6 @@ class GenreViewSet(CustomViewSet):
     lookup_field = 'slug'
 
 
-class TitlesFilter(FilterSet):
-    category = CharFilter(
-        field_name='category__slug',
-        lookup_expr='iexact'
-    )
-    genre = CharFilter(
-        field_name='genre__slug',
-        lookup_expr='iexact'
-    )
-    name = CharFilter(
-        field_name='name',
-        lookup_expr='contains'
-    )
-    year = NumberFilter(
-        field_name='year',
-        lookup_expr='iexact'
-    )
-
-    class Meta:
-        model = Title
-        fields = ('category', 'genre', 'name', 'year')
-
-
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all().annotate(rating=Avg('reviews__score'))
     permission_classes = [IsAdminOrReadOnly]
@@ -87,16 +61,6 @@ class TitleViewSet(viewsets.ModelViewSet):
         if self.action in ['create', 'partial_update', 'destroy']:
             return TitleUpdateCreateSerializer
         return TitleSerializer
-
-
-# class RegistrationAPIView(APIView):
-#     permission_classes = [AllowAny]
-#
-#     def post(self, request):
-#         serializer = RegistrationSerializer(data=request.data)
-#         serializer.is_valid(raise_exception=True)
-#         serializer.save()
-#         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])
@@ -127,7 +91,8 @@ def get_auth_token(request):
         user.save()
         token = AccessToken.for_user(user)
         return Response({'token': f'{token}'}, status=status.HTTP_200_OK)
-    return Response('Неверный код подтверждения', status=status.HTTP_400_BAD_REQUEST)
+    return Response('Неверный код подтверждения',
+                    status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserViewSet(viewsets.ModelViewSet):

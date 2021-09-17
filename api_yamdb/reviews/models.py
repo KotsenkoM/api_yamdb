@@ -1,3 +1,4 @@
+import datetime
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -21,16 +22,26 @@ class Category(models.Model):
         return self.name
 
 
+def year_validator(value):
+    if value < 1900 or value > datetime.datetime.now().year:
+        from django.core.exceptions import ValidationError
+        raise ValidationError(
+            '%(value)s is not a correct year!',
+            params={'value': value}
+        )
+
+
 class Title(models.Model):
     name = models.CharField(max_length=200,
                             verbose_name='Название произведения')
     year = models.IntegerField(
-        'Дата первой публикации')
+        'Дата первой публикации', validators=[
+         year_validator])
     description = models.TextField(blank=True, null=True, default='')
     genre = models.ManyToManyField(Genre)
     category = models.ForeignKey(
         Category, on_delete=models.SET_NULL,
-        related_name="category_title", null=True
+        related_name='category_title', null=True
     )
 
     def __str__(self):
@@ -54,4 +65,3 @@ class Review(models.Model):
 
     def __str__(self):
         return self.text
-
