@@ -11,6 +11,9 @@ from .views import (
     get_auth_token,
     signup
 )
+from .views import (TitleViewSet, GenreViewSet, CategoryViewSet,
+                    UserViewSet, signup, get_auth_token,
+                    )
 
 router_v1 = routers.DefaultRouter()
 router_v1.register(r'categories', CategoryViewSet, basename='category')
