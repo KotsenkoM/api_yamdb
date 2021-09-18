@@ -1,7 +1,8 @@
-import datetime
 from django.contrib.auth import get_user_model
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+
+from .validators import year_validator
 
 User = get_user_model()
 
@@ -20,15 +21,6 @@ class Category(models.Model):
 
     def __str__(self):
         return self.name
-
-
-def year_validator(value):
-    if value < 1900 or value > datetime.datetime.now().year:
-        from django.core.exceptions import ValidationError
-        raise ValidationError(
-            '%(value)s is not a correct year!',
-            params={'value': value}
-        )
 
 
 class Title(models.Model):
